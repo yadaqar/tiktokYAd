@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>ئەدیتەری دووگمەی ئەنیمەیشن</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&family=Noto+Sans+Arabic:wght@400;700&family=Cairo:wght@400;700;900&family=Vazirmatn:wght@400;700;900&family=Amiri:wght@400;700&family=Changa:wght@400;700;800&family=Tajawal:wght@400;700;900&family=Almarai:wght@400;700;800&family=Lalezar&display=swap" rel="stylesheet">
+<style id="embedded-fonts">
+  /*
+    تێبینی: بۆ زیادکردنی فۆنتی Rudaw و NRT، پێویستە فایلەکانی فۆنتی (woff2)
+    بگۆڕیت بۆ Base64 و لەم بەشەی خوارەوە دایبنێیت لە جیاتی ...
+    دەتوانیت ئۆنلاین ئەم کارە بکەیت بە گەڕان بۆ "font to base64 converter".
+  */
+  @font-face {
+    font-family: 'Rudaw';
+    src: url('data:font/woff2;base64,PASTE_RUDAW_FONT_BASE64_HERE...') format('woff2');
+  }
+  @font-face {
+    font-family: 'NRT';
+    src: url('data:font/woff2;base64,PASTE_NRT_FONT_BASE64_HERE...') format('woff2');
+  }
+</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Naskh Arabic','Noto Sans Arabic',Arial,sans-serif;background:#0d0d1a;color:#e0d4ff;min-height:100vh;padding:20px;direction:rtl}
+h1{font-size:18px;font-weight:700;color:#c8aaff;margin-bottom:20px;text-align:center;letter-spacing: -0.5px;}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:20px;max-width:1100px;margin:0 auto}
+.preview-area{background:#fff;border-radius:16px;display:flex;align-items:center;justify-content:center;min-height:340px;padding:30px;position:relative;overflow:hidden;transition:background 0.3s}
+.preview-area.dark-bg{background:#111}.preview-area.white-bg{background:#fff}
+.preview-area.gray-bg{background:#888}
+.preview-area.transparent-bg{background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/20px 20px}
+
+#btn-container{position:relative;width:500px;height:190px;border-radius:95px;overflow:hidden}
+.particle {
+  position: absolute; width: 5px; height: 5px; background: #fff; border-radius: 50%;
+  pointer-events: none; z-index: 5; box-shadow: 0 0 12px 2px #fff; opacity: 0;
+}
+@keyframes particleAnim { 0% { transform: scale(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: scale(1.2) translate(var(--dx), var(--dy)); opacity: 0; } }
+.blob{position:absolute;border-radius:50%;mix-blend-mode:screen}
+#blob1{width:280px;height:280px;background:radial-gradient(circle,#8b00ff 0%,#6600cc 40%,transparent 70%);top:-60px;left:40px}
+#blob2{width:260px;height:260px;background:radial-gradient(circle,#cc00ff 0%,#9900ee 35%,transparent 68%);top:-40px;right:50px}
+#blob3{width:200px;height:200px;background:radial-gradient(circle,#5500bb 0%,#3a007a 40%,transparent 70%);bottom:-30px;left:160px}
+#base-bg{position:absolute;inset:0;border-radius:95px;background:#1a0040}
+.vtrail{position:absolute;border-radius:9px;background:linear-gradient(90deg,transparent 0%,rgba(180,100,255,0.6) 30%,rgba(220,160,255,0.8) 55%,rgba(180,100,255,0.5) 75%,transparent 100%)}
+#trail1{top:38%;left:5%;right:5%;height:16px;filter:blur(3px)}
+#trail2{top:55%;left:8%;right:8%;height:10px;filter:blur(2px);opacity:.8}
+.lbeam{position:absolute;inset:0;border-radius:95px}
+#beam1{background:linear-gradient(105deg,transparent 30%,rgba(255,230,255,0.28) 50%,transparent 70%)}
+#beam2{background:linear-gradient(115deg,transparent 35%,rgba(240,200,255,0.18) 52%,transparent 68%)}
+#rim-top{position:absolute;top:0;left:8%;right:8%;height:2px;background:linear-gradient(90deg,transparent,rgba(220,180,255,0.7) 30%,rgba(255,240,255,0.9) 50%,rgba(220,180,255,0.7) 70%,transparent);border-radius:1px}
+#inner-glow{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(to bottom,rgba(180,100,255,0.12) 0%,transparent 100%);border-radius:95px 95px 0 0}
+
+#btn-text-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;padding:0 30px;overflow:hidden;pointer-events:none}
+#btn-text{text-align:center;text-shadow:0 2px 20px rgba(0,0,0,0.5);transition:all .3s;word-break:break-word;overflow-wrap:break-word;hyphens:auto;max-width:100%;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
+
+.panel{background:#1a1030;border:1px solid #3a2060;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;height:fit-content}
+.section-title{font-size:13px;color:#9980cc;font-weight:600;border-bottom:1px solid #2a1a4a;padding-bottom:8px;margin-bottom:4px}
+label{font-size:13px;color:#c0aaee;display:block;margin-bottom:5px}
+input[type=text],input[type=number],select,textarea{width:100%;background:#0d0820;border:1px solid #3a2060;color:#e0d4ff;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;direction:rtl}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:#8b00ff}
+input[type=range]{width:100%;accent-color:#8b00ff;height:4px;cursor:pointer}
+input[type=color]{width:42px;height:32px;border:1px solid #3a2060;border-radius:6px;cursor:pointer;background:none;padding:2px}
+.row{display:flex;align-items:center;gap:8px}
+.row label{margin:0;min-width:80px}
+.color-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.color-swatch{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
+.color-swatch:hover,.color-swatch.active{border-color:#fff}
+button{background:#2a1050;border:1px solid #5a30a0;color:#c8aaff;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s;flex:1}
+button:hover{background:#3d1880;border-color:#8b00ff}
+button.primary{background:#6600cc;border-color:#8b00ff;color:#fff}
+button.primary:hover{background:#8b00ff}
+button:disabled{opacity:.5;cursor:not-allowed}
+#font-upload-area{border:2px dashed #3a2060;border-radius:10px;padding:14px;text-align:center;cursor:pointer;font-size:13px;color:#9980cc;transition:all .2s}
+#font-upload-area:hover{border-color:#8b00ff;color:#c8aaff}
+.font-tag{display:inline-flex;align-items:center;gap:5px;background:#2a1050;border:1px solid #5a30a0;border-radius:20px;padding:4px 10px;font-size:12px;color:#c0aaee;cursor:pointer;margin:3px}
+.font-tag.active{background:#6600cc;border-color:#8b00ff;color:#fff}
+#progress-wrap{display:none;margin-top:6px}
+#progress-bar{width:100%;height:8px;background:#1a0040;border-radius:4px;overflow:hidden}
+#progress-fill{height:100%;background:linear-gradient(90deg,#6600cc,#cc00ff);border-radius:4px;transition:width .15s;width:0%}
+#progress-label{font-size:12px;color:#9980cc;text-align:center;margin-top:4px}
+.bg-btns{display:flex;gap:6px}
+.bg-btn{flex:1;padding:6px 8px;font-size:12px}
+.val-display{font-size:13px;color:#a080ff;min-width:36px;text-align:left}
+#loaded-fonts{display:flex;flex-wrap:wrap;margin-top:6px}
+.lines-note{font-size:11px;color:#7060aa;margin-top:4px}
+</style>
+</head>
+<body>
+<h1>🎨 ئەدیتەری دووگمەی ئەنیمەیشن — کوردی</h1>
+<div class="layout">
+  <div>
+    <div class="preview-area transparent-bg" id="preview-area">
+      <div id="btn-container">
+        <div id="base-bg"></div>
+        <div class="blob" id="blob1"></div>
+        <div class="blob" id="blob2"></div>
+        <div class="blob" id="blob3"></div>
+        <div class="vtrail" id="trail1"></div>
+        <div class="vtrail" id="trail2"></div>
+        <div class="lbeam" id="beam1"></div>
+        <div class="lbeam" id="beam2"></div>
+        <div id="rim-top"></div>
+        <div id="inner-glow"></div>
+        <div id="btn-text-wrap"><div id="btn-text">دووگمەی نمونە</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="bg-btn" onclick="setBg('white')">⬜ سپی</button>
+      <button class="bg-btn" onclick="setBg('dark')">⬛ تاریک</button>
+      <button class="bg-btn" onclick="setBg('gray')">◻ خاکستری</button>
+      <button class="bg-btn" onclick="setBg('transparent')">♟ شەفاف</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div>
+      <div class="section-title">✏️ نووسین</div>
+      <label>دەقی دووگمە (چەند ڕیزێک بنووسە)</label>
+      <textarea id="btn-text-input" oninput="updateText()">دووگمەی نمونە</textarea>
+      <div class="lines-note">نووسین لە ناوەوەی دووگمە دەمێنێتەوە — دەرناچێت</div>
+      <div style="margin-top:10px" class="row">
+        <label>قەبارەی فۆنت</label>
+        <input type="range" id="font-size" min="10" max="60" value="28" oninput="updateText()">
+        <span class="val-display" id="fs-val">28px</span>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label>ئەستووری</label>
+        <select id="font-weight" onchange="updateText()">
+          <option value="400">ئاسایی</option>
+          <option value="500">نیمەژیر</option>
+          <option value="600">نیمەژیر+</option>
+          <option value="700" selected>ژیر</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label>ڕیز بە ڕیز</label>
+        <input type="range" id="line-height" min="100" max="200" value="130" oninput="updateText()">
+        <span class="val-display" id="lh-val">1.3</span>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label>ڕەنگی دەق</label>
+        <input type="color" id="text-color" value="#ffffff" oninput="updateText()">
+        <div class="color-row" style="flex:1">
+          <div class="color-swatch active" style="background:#ffffff" onclick="setTC('#ffffff',this)"></div>
+          <div class="color-swatch" style="background:#ffe0ff" onclick="setTC('#ffe0ff',this)"></div>
+          <div class="color-swatch" style="background:#ffff88" onclick="setTC('#ffff88',this)"></div>
+          <div class="color-swatch" style="background:#aaffcc" onclick="setTC('#aaffcc',this)"></div>
+          <div class="color-swatch" style="background:#88ccff" onclick="setTC('#88ccff',this)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">🔤 فۆنت</div>
+      <label>فۆنتی ئامادە</label>
+      <select id="font-select" onchange="applyFont()">
+        <option value="'Rudaw', sans-serif">Rudaw (فۆنتی ڕووداو)</option>
+        <option value="'NRT', sans-serif">NRT (فۆنتی ئێن ئاڕ تی)</option>
+        <option value="'Noto Naskh Arabic', serif">Noto Naskh (کوردی ستاندارد)</option>
+        <option value="'Noto Sans Arabic', sans-serif">Noto Sans (کوردی مۆدێرن)</option>
+        <option value="'Cairo', sans-serif">Cairo (ناوازە بۆ تیکتۆک)</option>
+        <option value="'Vazirmatn', sans-serif">Vazirmatn (ڕوون و جوان)</option>
+        <option value="'Lalezar', cursive">Lalezar (فۆنتی ئەستوور)</option>
+        <option value="'Changa', sans-serif">Changa (وەرزشی و تیز)</option>
+        <option value="'Tajawal', sans-serif">Tajawal (سادە و ئەندازەیی)</option>
+        <option value="'Almarai', sans-serif">Almarai (فۆنتی فەرمی)</option>
+        <option value="'Amiri', serif">Amiri (کلاسیک)</option>
+        <option value="Arial,sans-serif">Arial</option>
+        <option value="Georgia,serif">Georgia</option>
+      </select>
+      <div id="font-upload-area" style="margin-top:8px" onclick="document.getElementById('font-file').click()">
+        📁 بارکردنی فایلی فۆنت (.ttf .woff .woff2 .otf)
+        <input type="file" id="font-file" accept=".ttf,.woff,.woff2,.otf" style="display:none" multiple onchange="loadFonts(event)">
+      </div>
+      <div id="loaded-fonts"></div>
+    </div>
+
+    <div>
+      <div class="section-title">💡 ڕووناکی و ڕەنگ</div>
+      <button class="primary" style="background: linear-gradient(135deg, #FFD700, #DAA520); border:none; color:#000; font-weight:700; width:100%; margin-bottom:12px; box-shadow: 0 4px 15px rgba(218,165,32,0.3)" onclick="applyGoldenGlow()">✨ درەوشانەوەی ئاڵتونی</button>
+      <button class="primary" style="background: #2a1050; border:1px solid #8b00ff; color:#e0d4ff; width:100%; margin-bottom:12px;" onclick="toggleParticles()">✨ پڕژانی ئەستێرە</button>
+      <label>ڕەنگی بلۆب ١</label>
+      <div class="color-row">
+        <input type="color" id="blob1-color" value="#8b00ff" oninput="currentGlow='rimGlow';updateBlobs()">
+        <div class="color-swatch active" style="background:#8b00ff" onclick="setB1('#8b00ff',this)"></div>
+        <div class="color-swatch" style="background:#ff0080" onclick="setB1('#ff0080',this)"></div>
+        <div class="color-swatch" style="background:#0066ff" onclick="setB1('#0066ff',this)"></div>
+        <div class="color-swatch" style="background:#00ccaa" onclick="setB1('#00ccaa',this)"></div>
+        <div class="color-swatch" style="background:#ff6600" onclick="setB1('#ff6600',this)"></div>
+      </div>
+      <label style="margin-top:8px">ڕەنگی بلۆب ٢</label>
+      <div class="color-row">
+        <input type="color" id="blob2-color" value="#cc00ff" oninput="currentGlow='rimGlow';updateBlobs()">
+        <div class="color-swatch active" style="background:#cc00ff" onclick="setB2('#cc00ff',this)"></div>
+        <div class="color-swatch" style="background:#ff4488" onclick="setB2('#ff4488',this)"></div>
+        <div class="color-swatch" style="background:#4488ff" onclick="setB2('#4488ff',this)"></div>
+        <div class="color-swatch" style="background:#00ffaa" onclick="setB2('#00ffaa',this)"></div>
+        <div class="color-swatch" style="background:#ffaa00" onclick="setB2('#ffaa00',this)"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label>تریل</label>
+        <input type="range" id="trail-op" min="0" max="100" value="70" oninput="updateTrails()">
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label>بیم</label>
+        <input type="range" id="beam-op" min="0" max="100" value="50" oninput="updateBeams()">
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">⚡ خێرایی</div>
+      <div class="row"><label>بلۆب</label><input type="range" id="sp-blob" min="1" max="20" value="6" oninput="updateSpeeds()"><span class="val-display" id="spb-v">6s</span></div>
+      <div class="row" style="margin-top:6px"><label>بیم</label><input type="range" id="sp-beam" min="1" max="10" value="3" oninput="updateSpeeds()"><span class="val-display" id="spbm-v">3s</span></div>
+      <div class="row" style="margin-top:6px"><label>تریل</label><input type="range" id="sp-trail" min="1" max="8" value="3" oninput="updateSpeeds()"><span class="val-display" id="spt-v">3s</span></div>
+    </div>
+
+    <div>
+      <div class="section-title">🎬 هەناردنی ڤیدیۆ</div>
+      <div class="row" style="margin-bottom:8px">
+        <label>کوالیتی</label>
+        <select id="quality-select">
+          <option value="1920x1080">1080p Full HD</option>
+          <option value="1280x720">720p HD</option>
+          <option value="3840x2160">4K Ultra HD</option>
+          <option value="640x360">360p سووک</option>
+        </select>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <label>کات (چ)</label>
+        <input type="number" id="video-duration" value="6" min="2" max="30" style="width:70px">
+        <label style="min-width:auto">FPS</label>
+        <select id="fps-select" style="width:70px">
+          <option value="30">30</option>
+          <option value="60" selected>60</option>
+          <option value="24">24</option>
+        </select>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;min-width:auto;flex:1">
+          <input type="checkbox" id="transparent-bg-export" checked style="width:16px;height:16px;accent-color:#8b00ff">
+          پشتەوانەی شەفاف (بێ باکگراوند)
+        </label>
+      </div>
+      <button class="primary" onclick="exportVideo()" id="export-btn">⬇ هەناردنی ڤیدیۆ WebM (شەفاف)</button>
+      <div id="progress-wrap">
+        <div id="progress-bar"><div id="progress-fill"></div></div>
+        <div id="progress-label">چاوەڕوانبە...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+let currentFont = "'Noto Naskh Arabic',serif";
+
+const animCSS = document.createElement('style');
+animCSS.textContent = `
+@keyframes drift{0%{transform:translate(0,0) scale(1)}25%{transform:translate(30px,-20px) scale(1.1)}50%{transform:translate(-20px,25px) scale(.95)}75%{transform:translate(25px,15px) scale(1.05)}100%{transform:translate(0,0) scale(1)}}
+@keyframes drift2{0%{transform:translate(0,0) scale(1.05)}30%{transform:translate(-35px,20px) scale(.9)}60%{transform:translate(20px,-30px) scale(1.1)}100%{transform:translate(0,0) scale(1.05)}}
+@keyframes drift3{0%{transform:translate(10px,5px) scale(1)}40%{transform:translate(-15px,-25px) scale(1.15)}70%{transform:translate(30px,20px) scale(.9)}100%{transform:translate(10px,5px) scale(1)}}
+@keyframes lightBeam{0%{opacity:0;transform:translateX(-120%) rotate(-30deg)}30%{opacity:.45}60%{opacity:.2}100%{opacity:0;transform:translateX(120%) rotate(-30deg)}}
+@keyframes lightBeam2{0%{opacity:0;transform:translateX(-120%) rotate(-20deg)}40%{opacity:.3}70%{opacity:.15}100%{opacity:0;transform:translateX(120%) rotate(-20deg)}}
+@keyframes velocityTrail{0%{opacity:0;transform:scaleX(.3) translateX(-30px)}20%{opacity:.55}70%{opacity:.2}100%{opacity:0;transform:scaleX(1.4) translateX(30px)}}
+@keyframes velocityTrail2{0%{opacity:0;transform:scaleX(.2) translateX(-40px)}25%{opacity:.4}75%{opacity:.15}100%{opacity:0;transform:scaleX(1.3) translateX(40px)}}
+@keyframes rimGlow{0%,100%{box-shadow:0 0 0 0 rgba(140,80,255,0),inset 0 0 0 0 rgba(200,150,255,0)}30%{box-shadow:0 0 30px 8px rgba(140,80,255,.35),inset 0 1px 18px rgba(220,180,255,.25)}65%{box-shadow:0 0 12px 4px rgba(160,100,255,.18),inset 0 1px 8px rgba(200,160,255,.15)}}
+@keyframes subtlePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.012)}}
+@keyframes goldenGlow{0%,100%{box-shadow:0 0 15px rgba(255,180,0,0.3),inset 0 0 10px rgba(255,215,0,0.2)}50%{box-shadow:0 0 50px 18px rgba(255,190,0,0.8),inset 0 0 35px rgba(255,225,0,0.6)}}
+#blob1{animation:drift 6s ease-in-out infinite}
+#blob2{animation:drift2 7.5s ease-in-out infinite}
+#blob3{animation:drift3 5.5s ease-in-out infinite}
+#beam1{animation:lightBeam 3.2s ease-in-out infinite}
+#beam2{animation:lightBeam2 3.2s ease-in-out infinite 1.6s}
+#trail1{animation:velocityTrail 2.8s ease-in-out infinite}
+#trail2{animation:velocityTrail2 2.8s ease-in-out infinite .4s}
+#btn-container{animation:rimGlow 4s ease-in-out infinite,subtlePulse 3.5s ease-in-out infinite}
+#btn-text{font-size:28px;font-weight:700;color:#fff;font-family:'Noto Naskh Arabic',serif;line-height:1.3}
+`;
+document.head.appendChild(animCSS);
+
+let currentGlow = 'rimGlow';
+
+function toggleParticles() {
+  const container = document.getElementById('btn-container');
+  const existing = container.querySelectorAll('.particle');
+  if (existing.length > 0) {
+    existing.forEach(p => p.remove());
+    return;
+  }
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = '50%';
+    p.style.top = '50%';
+    p.style.setProperty('--dx', (Math.random() - 0.5) * 400 + 'px');
+    p.style.setProperty('--dy', (Math.random() - 0.5) * 200 + 'px');
+    p.style.animation = `particleAnim ${1.5 + Math.random() * 2}s infinite ${Math.random() * 2}s`;
+    container.appendChild(p);
+  }
+}
+
+function applyGoldenGlow() {
+  currentGlow = 'goldenGlow';
+  document.getElementById('blob1-color').value = '#FFD700';
+  document.getElementById('blob2-color').value = '#DAA520';
+  updateBlobs();
+  updateSpeeds();
+}
+
+/* CSS for Mobile responsiveness */
+const mobileStyle = document.createElement('style');
+mobileStyle.textContent = `
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+  #btn-container { width: 100%; max-width: 500px; height: 160px; border-radius: 80px; }
+  #base-bg { border-radius: 80px; }
+  .preview-area { min-height: 250px; padding: 15px; }
+}
+`;
+document.head.appendChild(mobileStyle);
+
+function updateText(){
+  const wrap = document.getElementById('btn-text-wrap');
+  const t = document.getElementById('btn-text');
+  const raw = document.getElementById('btn-text-input').value||'دووگمە';
+  const fs = parseInt(document.getElementById('font-size').value);
+  const fw = document.getElementById('font-weight').value;
+  const lh = document.getElementById('line-height').value/100;
+  const col = document.getElementById('text-color').value;
+  document.getElementById('fs-val').textContent = fs+'px';
+  document.getElementById('lh-val').textContent = lh.toFixed(1);
+  t.style.cssText = `font-size:${fs}px;font-weight:${fw};color:${col};font-family:${currentFont};line-height:${lh};text-align:center;word-break:break-word;overflow-wrap:break-word;hyphens:auto;max-width:100%;text-shadow:0 2px 20px rgba(0,0,0,0.6)`;
+  t.innerHTML = '';
+  const lines = raw.split('\n');
+  lines.forEach((line,i)=>{
+    const span = document.createElement('span');
+    span.textContent = line;
+    span.style.display = 'block';
+    t.appendChild(span);
+  });
+  autoFitText(t, wrap, fs, fw, lh, col, lines);
+}
+
+function autoFitText(t, wrap, startFs, fw, lh, col, lines){
+  const maxW = 440;
+  const maxH = 170;
+  let fs = startFs;
+  t.style.fontSize = fs+'px';
+  let tries = 0;
+  while((t.scrollWidth > maxW || t.scrollHeight > maxH) && fs > 10 && tries < 30){
+    fs -= 1;
+    t.style.fontSize = fs+'px';
+    tries++;
+  }
+  if(tries > 0) document.getElementById('fs-val').textContent = fs+'px (خۆکار)';
+}
+
+function setTC(c,el){
+  currentGlow = 'rimGlow';
+  document.getElementById('text-color').value=c;
+  document.querySelectorAll('.color-row .color-swatch').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  updateText();
+}
+
+function applyFont() {
+  const v=document.getElementById('font-select').value;
+  currentFont=v; updateText();
+}
+
+function loadFonts(e){
+  Array.from(e.target.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      const name=file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ');
+      const s=document.createElement('style');
+      s.textContent=`@font-face{font-family:'${name}';src:url('${ev.target.result}')}`;
+      document.head.appendChild(s);
+      const tag=document.createElement('span');
+      tag.className='font-tag';
+      tag.textContent=name;
+      tag.onclick=()=>{
+        document.querySelectorAll('.font-tag').forEach(t=>t.classList.remove('active'));
+        tag.classList.add('active');
+        currentFont=`'${name}',sans-serif`;
+        updateText();
+      };
+      document.getElementById('loaded-fonts').appendChild(tag);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function hexToRgb(hex){
+  hex=hex.replace('#','');
+  return{r:parseInt(hex.slice(0,2),16),g:parseInt(hex.slice(2,4),16),b:parseInt(hex.slice(4,6),16)};
+}
+function updateBlobs(){
+  const c1=document.getElementById('blob1-color').value;
+  const c2=document.getElementById('blob2-color').value;
+  const r1=hexToRgb(c1),r2=hexToRgb(c2);
+  const d1=`rgb(${Math.floor(r1.r*.7)},${Math.floor(r1.g*.7)},${Math.floor(r1.b*.7)})`;
+  const d2=`rgb(${Math.floor(r2.r*.7)},${Math.floor(r2.g*.7)},${Math.floor(r2.b*.7)})`;
+  document.getElementById('blob1').style.background=`radial-gradient(circle,${c1} 0%,${d1} 40%,transparent 70%)`;
+  document.getElementById('blob2').style.background=`radial-gradient(circle,${c2} 0%,${d2} 35%,transparent 68%)`;
+  const base=`rgb(${Math.floor(r1.r*.1)},${Math.floor(r1.g*.05)},${Math.floor(r1.b*.25)})`;
+  document.getElementById('base-bg').style.background=base;
+}
+function setB1(c,el){
+  currentGlow = 'rimGlow';
+  document.getElementById('blob1-color').value=c;
+  document.querySelectorAll('#blob1-color~.color-row .color-swatch').forEach(s=>s.classList.remove('active'));
+  el&&el.classList.add('active');
+  updateBlobs();
+}
+function setB2(c,el){
+  currentGlow = 'rimGlow';
+  document.getElementById('blob2-color').value=c;
+  el&&el.classList.add('active');
+  updateBlobs();
+}
+function updateTrails(){
+  const op=document.getElementById('trail-op').value/100;
+  document.getElementById('trail1').style.opacity=op;
+  document.getElementById('trail2').style.opacity=op*.8;
+}
+function updateBeams(){
+  const op=document.getElementById('beam-op').value/100;
+  document.getElementById('beam1').style.opacity=op;
+  document.getElementById('beam2').style.opacity=op*.7;
+}
+function updateSpeeds(){
+  const sb=document.getElementById('sp-blob').value;
+  const sbm=document.getElementById('sp-beam').value;
+  const st=document.getElementById('sp-trail').value;
+  document.getElementById('spb-v').textContent=sb+'s';
+  document.getElementById('spbm-v').textContent=sbm+'s';
+  document.getElementById('spt-v').textContent=st+'s';
+  let el=document.getElementById('anim-speed');
+  if(!el){el=document.createElement('style');el.id='anim-speed';document.head.appendChild(el);}
+  el.textContent=`
+    #blob1{animation:drift ${sb}s ease-in-out infinite!important}
+    #blob2{animation:drift2 ${sb*1.25}s ease-in-out infinite!important}
+    #blob3{animation:drift3 ${sb*.9}s ease-in-out infinite!important}
+    #beam1{animation:lightBeam ${sbm}s ease-in-out infinite!important}
+    #beam2{animation:lightBeam2 ${sbm}s ease-in-out infinite ${sbm/2}s!important}
+    #trail1{animation:velocityTrail ${st}s ease-in-out infinite!important}
+    #trail2{animation:velocityTrail2 ${st}s ease-in-out infinite .4s!important}
+    #btn-container{animation:${currentGlow} ${sb*.67}s ease-in-out infinite,subtlePulse ${sb*.58}s ease-in-out infinite!important}
+  `;
+}
+function setBg(type){
+  const area = document.getElementById('preview-area');
+  const transparentCheckbox = document.getElementById('transparent-bg-export');
+  area.className = 'preview-area'; // Reset classes
+  if (type === 'white') {
+    document.getElementById('export-btn').textContent = '⬇ هەناردنی ڤیدیۆ MP4';
+    area.classList.add('white-bg');
+    transparentCheckbox.checked = false;
+  } else if (type === 'transparent') {
+    document.getElementById('export-btn').textContent = '⬇ هەناردنی ڤیدیۆ WebM (شەفاف)';
+    area.classList.add('transparent-bg');
+    transparentCheckbox.checked = true;
+  } else {
+    document.getElementById('export-btn').textContent = '⬇ هەناردنی ڤیدیۆ MP4';
+    if (type === 'dark') area.classList.add('dark-bg');
+    else if (type === 'gray') area.classList.add('gray-bg');
+    transparentCheckbox.checked = false;
+  }
+}
+
+async function exportVideo(){
+  const qualVal=document.getElementById('quality-select').value;
+  const[W,H]=qualVal.split('x').map(Number);
+  const duration=parseInt(document.getElementById('video-duration').value);
+  const fps=parseInt(document.getElementById('fps-select').value);
+  const totalFrames=duration*fps;
+  const useTransparent=document.getElementById('transparent-bg-export').checked;
+
+  const pw=document.getElementById('progress-wrap');
+  const btn=document.getElementById('export-btn');
+  pw.style.display='block';
+  btn.disabled=true;
+  btn.textContent='⏳ دەرهێنان...';
+
+  const btnEl=document.getElementById('btn-container');
+  const btnRect=btnEl.getBoundingClientRect();
+  const scale=Math.min(W/btnRect.width,H/btnRect.height)*.85;
+
+  const canvas=document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  // For transparent video, WebM (VP9) is the most reliable format from MediaRecorder.
+  // For non-transparent, we can try MP4.
+  const mimeType = useTransparent ? 'video/webm;codecs=vp9' : 'video/mp4';
+  let chunks=[];
+  let stream,recorder;
+  try{
+    stream=canvas.captureStream(fps);
+    recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:10000000});
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop=()=>{
+      const fileExtension = useTransparent ? '.webm' : '.mp4';
+      const blob=new Blob(chunks,{type: useTransparent ? 'video/webm' : 'video/mp4'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=`button_${qualVal}${useTransparent?'_transparent':''}${fileExtension}`; a.click();
+      document.getElementById('progress-label').textContent='✅ تەواوبوو! داونلۆد دەبێت';
+      btn.disabled=false; btn.textContent=`⬇ هەناردنی ڤیدیۆ ${useTransparent ? 'WebM (شەفاف)' : 'MP4'}`;
+      setTimeout(()=>{pw.style.display='none';document.getElementById('progress-fill').style.width='0%';},4000);
+    };
+    recorder.start();
+  }catch(e){
+    alert('لوتفاً Chrome بەکاربهێنە بۆ هەناردنی ڤیدیۆ. (هەناردنی MP4 بە پشتەوانەی شەفاف ڕەنگە لە هەموو براوزەرێکدا کار نەکات.)');
+    btn.disabled=false; btn.textContent=`⬇ هەناردنی ڤیدیۆ ${useTransparent ? 'WebM' : 'MP4'}`;
+    pw.style.display='none'; return;
+  }
+
+  const totalMs=duration*1000;
+  for(let frame=0;frame<totalFrames;frame++){
+    const t=(frame/totalFrames)*totalMs;
+    const pct=Math.round((frame/totalFrames)*100);
+    document.getElementById('progress-fill').style.width=pct+'%';
+    document.getElementById('progress-label').textContent=`فریم ${frame+1} لە ${totalFrames} — ${pct}%`;
+    btnEl.style.animationDelay=`-${t}ms`;
+    btnEl.querySelectorAll('*').forEach(el=>el.style.animationDelay=`-${t}ms`);
+    await new Promise(r=>requestAnimationFrame(r));
+    const snap=await html2canvas(btnEl,{
+      scale,backgroundColor:null,useCORS:true,logging:false,
+      width:btnRect.width,height:btnRect.height
+    });
+    ctx.clearRect(0,0,W,H);
+    if(!useTransparent){
+      const pa=document.getElementById('preview-area');
+      const bgStyle=window.getComputedStyle(pa).backgroundColor;
+      ctx.fillStyle=(bgStyle==='rgba(0, 0, 0, 0)'||pa.classList.contains('transparent-bg'))?'#ffffff':bgStyle;
+      ctx.fillRect(0,0,W,H);
+    }
+    const x=(W-snap.width)/2, y=(H-snap.height)/2;
+    ctx.drawImage(snap,x,y);
+    await new Promise(r=>setTimeout(r,1));
+  }
+  btnEl.style.animationDelay='';
+  btnEl.querySelectorAll('*').forEach(el=>el.style.animationDelay='');
+  recorder.stop();
+}
+
+updateText();
+</script>
+</body>
+</html>
