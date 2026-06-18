@@ -28,6 +28,7 @@ h1{font-size:18px;font-weight:700;color:#c8aaff;margin-bottom:20px;text-align:ce
 .preview-area.dark-bg{background:#111}.preview-area.white-bg{background:#fff}
 .preview-area.gray-bg{background:#888}
 .preview-area.transparent-bg{background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/20px 20px}
+.preview-area.chroma-bg{background:#00ff00}
 
 #btn-container{position:relative;width:500px;height:190px;border-radius:95px;overflow:hidden}
 .particle {
@@ -71,6 +72,7 @@ button.primary{background:#6600cc;border-color:#8b00ff;color:#fff}
 button.primary:hover{background:#8b00ff}
 button:disabled{opacity:.5;cursor:not-allowed}
 #font-upload-area{border:2px dashed #3a2060;border-radius:10px;padding:14px;text-align:center;cursor:pointer;font-size:13px;color:#9980cc;transition:all .2s}
+button.active{background:#6600cc;border-color:#8b00ff;color:#fff;box-shadow:0 0 12px #8b00ff88;}
 #font-upload-area:hover{border-color:#8b00ff;color:#c8aaff}
 .font-tag{display:inline-flex;align-items:center;gap:5px;background:#2a1050;border:1px solid #5a30a0;border-radius:20px;padding:4px 10px;font-size:12px;color:#c0aaee;cursor:pointer;margin:3px}
 .font-tag.active{background:#6600cc;border-color:#8b00ff;color:#fff}
@@ -103,11 +105,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <div id="inner-glow"></div>
         <div id="btn-text-wrap"><div id="btn-text">دووگمەی نمونە</div></div>
       </div>
+      <div id="animated-logo-container" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:none;">
+        <img id="animated-logo-img" src="" alt="Animated Logo" style="width:80px; height:80px; object-fit:contain;">
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="bg-btn" onclick="setBg('white')">⬜ سپی</button>
       <button class="bg-btn" onclick="setBg('dark')">⬛ تاریک</button>
       <button class="bg-btn" onclick="setBg('gray')">◻ خاکستری</button>
+      <button class="bg-btn" onclick="setBg('chroma')" style="background:#00ff00;color:#000;border-color:#00bb00">🟩 کرۆما</button>
       <button class="bg-btn" onclick="setBg('transparent')">♟ شەفاف</button>
     </div>
   </div>
@@ -208,6 +214,35 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
 
     <div>
+      <div class="section-title">🖼️ لۆگۆی جووڵاو</div>
+      <label>بارکردنی لۆگۆ</label>
+      <div id="logo-upload-area" style="border:2px dashed #3a2060;border-radius:10px;padding:14px;text-align:center;cursor:pointer;font-size:13px;color:#9980cc;transition:all .2s" onclick="document.getElementById('logo-file').click()">
+        📁 کلیک بکە بۆ بارکردنی لۆگۆ (PNG, JPG)
+        <input type="file" id="logo-file" accept="image/png,image/jpeg" style="display:none" onchange="loadLogo(event)">
+      </div>
+      <div id="logo-preview-container" style="margin-top:10px;display:none;align-items:center;gap:10px;">
+        <img id="uploaded-logo" src="" alt="Uploaded Logo" style="width:50px;height:50px;object-fit:contain;border-radius:8px;border:1px solid #5a30a0;">
+        <button onclick="toggleLogoGlow()" id="logo-glow-btn" style="flex:1;">✨ درەوشانەوەی لۆگۆ</button>
+        <button onclick="removeLogo()" style="flex:0;padding:8px 10px;background:#501010;border-color:#a03030;">🗑️</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <label>قەبارەی لۆگۆ</label>
+        <input type="range" id="logo-size" min="20" max="200" value="80" oninput="updateLogoStyle()">
+        <span class="val-display" id="logo-size-val">80px</span>
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <label>شوێنی X</label>
+        <input type="range" id="logo-pos-x" min="-200" max="200" value="0" oninput="updateLogoStyle()">
+        <span class="val-display" id="logo-pos-x-val">0px</span>
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <label>شوێنی Y</label>
+        <input type="range" id="logo-pos-y" min="-100" max="100" value="0" oninput="updateLogoStyle()">
+        <span class="val-display" id="logo-pos-y-val">0px</span>
+      </div>
+    </div>
+
+    <div>
       <div class="section-title">⚡ خێرایی</div>
       <div class="row"><label>بلۆب</label><input type="range" id="sp-blob" min="1" max="20" value="6" oninput="updateSpeeds()"><span class="val-display" id="spb-v">6s</span></div>
       <div class="row" style="margin-top:6px"><label>بیم</label><input type="range" id="sp-beam" min="1" max="10" value="3" oninput="updateSpeeds()"><span class="val-display" id="spbm-v">3s</span></div>
@@ -241,7 +276,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
           پشتەوانەی شەفاف (بێ باکگراوند)
         </label>
       </div>
-      <button class="primary" onclick="exportVideo()" id="export-btn">⬇ هەناردنی ڤیدیۆ WebM (شەفاف)</button>
+      <button class="primary" onclick="exportVideo()" id="export-btn">⬇ هەناردنی ڤیدیۆ MP4</button>
       <div id="progress-wrap">
         <div id="progress-bar"><div id="progress-fill"></div></div>
         <div id="progress-label">چاوەڕوانبە...</div>
@@ -278,6 +313,8 @@ animCSS.textContent = `
 `;
 document.head.appendChild(animCSS);
 
+let logoImage = null;
+let logoGlowActive = false;
 let currentGlow = 'rimGlow';
 
 function toggleParticles() {
@@ -285,6 +322,7 @@ function toggleParticles() {
   const existing = container.querySelectorAll('.particle');
   if (existing.length > 0) {
     existing.forEach(p => p.remove());
+    document.getElementById('particle-btn').classList.remove('active');
     return;
   }
   for (let i = 0; i < 30; i++) {
@@ -296,6 +334,82 @@ function toggleParticles() {
     p.style.setProperty('--dy', (Math.random() - 0.5) * 200 + 'px');
     p.style.animation = `particleAnim ${1.5 + Math.random() * 2}s infinite ${Math.random() * 2}s`;
     container.appendChild(p);
+  }
+  document.getElementById('particle-btn').classList.add('active');
+}
+
+function loadLogo(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    logoImage = e.target.result;
+    document.getElementById('uploaded-logo').src = logoImage;
+    document.getElementById('animated-logo-img').src = logoImage;
+    document.getElementById('logo-preview-container').style.display = 'flex';
+    document.getElementById('animated-logo-container').style.display = 'block';
+    updateLogoStyle();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  logoImage = null;
+  document.getElementById('uploaded-logo').src = '';
+  document.getElementById('animated-logo-img').src = '';
+  document.getElementById('logo-preview-container').style.display = 'none';
+  document.getElementById('animated-logo-container').style.display = 'none';
+  logoGlowActive = false;
+  document.getElementById('logo-glow-btn').classList.remove('active');
+  logoRotationActive = false;
+  document.getElementById('logo-rotate-btn').classList.remove('active');
+  // Remove any particle effects if active
+  const logoContainer = document.getElementById('animated-logo-container');
+  logoContainer.querySelectorAll('.particle').forEach(p => p.remove());
+}
+
+function updateLogoStyle() {
+  if (!logoImage) return;
+  const logoEl = document.getElementById('animated-logo-img');
+  const logoContainer = document.getElementById('animated-logo-container');
+  const size = document.getElementById('logo-size').value;
+  const posX = document.getElementById('logo-pos-x').value;
+  const posY = document.getElementById('logo-pos-y').value;
+
+  document.getElementById('logo-size-val').textContent = size + 'px';
+  document.getElementById('logo-pos-x-val').textContent = posX + 'px';
+  document.getElementById('logo-pos-y-val').textContent = posY + 'px';
+
+  logoEl.style.width = size + 'px';
+  logoEl.style.height = size + 'px';
+  logoContainer.style.left = `calc(50% + ${posX}px)`;
+  logoContainer.style.top = `calc(50% + ${posY}px)`;
+}
+
+function toggleLogoGlow() {
+  if (!logoImage) return;
+  logoGlowActive = !logoGlowActive;
+  const logoContainer = document.getElementById('animated-logo-container');
+  const glowBtn = document.getElementById('logo-glow-btn');
+
+  if (logoGlowActive) {
+    glowBtn.classList.add('active');
+    // Add particle effect to logo container
+    for (let i = 0; i < 20; i++) { // Fewer particles for logo
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = '50%';
+      p.style.top = '50%';
+      p.style.setProperty('--dx', (Math.random() - 0.5) * 100 + 'px'); // Smaller spread
+      p.style.setProperty('--dy', (Math.random() - 0.5) * 100 + 'px');
+      p.style.animation = `particleAnim ${1 + Math.random() * 1.5}s infinite ${Math.random() * 1.5}s`;
+      logoContainer.appendChild(p);
+    }
+  } else {
+    glowBtn.classList.remove('active');
+    // Remove particle effects
+    logoContainer.querySelectorAll('.particle').forEach(p => p.remove());
   }
 }
 
@@ -356,6 +470,7 @@ function autoFitText(t, wrap, startFs, fw, lh, col, lines){
 }
 
 function setTC(c,el){
+  document.getElementById('silver-rim').style.display = 'none';
   currentGlow = 'rimGlow';
   document.getElementById('text-color').value=c;
   document.querySelectorAll('.color-row .color-swatch').forEach(s=>s.classList.remove('active'));
@@ -407,6 +522,7 @@ function updateBlobs(){
   document.getElementById('base-bg').style.background=base;
 }
 function setB1(c,el){
+  document.getElementById('silver-rim').style.display = 'none';
   currentGlow = 'rimGlow';
   document.getElementById('blob1-color').value=c;
   document.querySelectorAll('#blob1-color~.color-row .color-swatch').forEach(s=>s.classList.remove('active'));
@@ -414,6 +530,7 @@ function setB1(c,el){
   updateBlobs();
 }
 function setB2(c,el){
+  document.getElementById('silver-rim').style.display = 'none';
   currentGlow = 'rimGlow';
   document.getElementById('blob2-color').value=c;
   el&&el.classList.add('active');
@@ -461,6 +578,10 @@ function setBg(type){
     document.getElementById('export-btn').textContent = '⬇ هەناردنی ڤیدیۆ WebM (شەفاف)';
     area.classList.add('transparent-bg');
     transparentCheckbox.checked = true;
+  } else if (type === 'chroma') {
+    document.getElementById('export-btn').textContent = '⬇ هەناردنی ڤیدیۆ MP4';
+    area.classList.add('chroma-bg');
+    transparentCheckbox.checked = false;
   } else {
     document.getElementById('export-btn').textContent = '⬇ هەناردنی ڤیدیۆ MP4';
     if (type === 'dark') area.classList.add('dark-bg');
@@ -476,7 +597,7 @@ async function exportVideo(){
   const fps=parseInt(document.getElementById('fps-select').value);
   const totalFrames=duration*fps;
   const useTransparent=document.getElementById('transparent-bg-export').checked;
-
+  const isChroma = document.getElementById('preview-area').classList.contains('chroma-bg');
   const pw=document.getElementById('progress-wrap');
   const btn=document.getElementById('export-btn');
   pw.style.display='block';
@@ -491,9 +612,20 @@ async function exportVideo(){
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext('2d');
 
-  // For transparent video, WebM (VP9) is the most reliable format from MediaRecorder.
-  // For non-transparent, we can try MP4.
-  const mimeType = useTransparent ? 'video/webm;codecs=vp9' : 'video/mp4';
+  let mimeType = useTransparent ? 'video/webm;codecs=vp9' : 'video/mp4';
+  let fileExtension = useTransparent ? '.webm' : '.mp4';
+
+  if (!MediaRecorder.isTypeSupported(mimeType)) {
+    if (!useTransparent) {
+      alert('وێبگەڕەکەت پشتگیری هەناردەکردنی MP4 ناکات. لەجیاتی ئەوە وەک WebM هەناردە دەکرێت.');
+      mimeType = 'video/webm';
+      fileExtension = '.webm';
+    } else {
+      alert('وێبگەڕەکەت پشتگیری هەناردەکردنی ڤیدیۆی شەفاف ناکات.');
+      pw.style.display='none'; return;
+    }
+  }
+
   let chunks=[];
   let stream,recorder;
   try{
@@ -501,19 +633,18 @@ async function exportVideo(){
     recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:10000000});
     recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
     recorder.onstop=()=>{
-      const fileExtension = useTransparent ? '.webm' : '.mp4';
       const blob=new Blob(chunks,{type: useTransparent ? 'video/webm' : 'video/mp4'});
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');
       a.href=url; a.download=`button_${qualVal}${useTransparent?'_transparent':''}${fileExtension}`; a.click();
       document.getElementById('progress-label').textContent='✅ تەواوبوو! داونلۆد دەبێت';
-      btn.disabled=false; btn.textContent=`⬇ هەناردنی ڤیدیۆ ${useTransparent ? 'WebM (شەفاف)' : 'MP4'}`;
+      btn.disabled=false; btn.textContent=`⬇ هەناردنی ڤیدیۆ ${fileExtension.substring(1).toUpperCase()}`;
       setTimeout(()=>{pw.style.display='none';document.getElementById('progress-fill').style.width='0%';},4000);
     };
     recorder.start();
   }catch(e){
-    alert('لوتفاً Chrome بەکاربهێنە بۆ هەناردنی ڤیدیۆ. (هەناردنی MP4 بە پشتەوانەی شەفاف ڕەنگە لە هەموو براوزەرێکدا کار نەکات.)');
-    btn.disabled=false; btn.textContent=`⬇ هەناردنی ڤیدیۆ ${useTransparent ? 'WebM' : 'MP4'}`;
+    alert('کێشەیەک لە هەناردەکردندا ڕوویدا. تکایە وێبگەڕی Chrome بەکاربهێنە.');
+    btn.disabled=false; btn.textContent=`⬇ هەناردنی ڤیدیۆ`;
     pw.style.display='none'; return;
   }
 
